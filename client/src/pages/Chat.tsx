@@ -115,6 +115,13 @@ const Chat: React.FC = () => {
 
   const handleClear = () => {
     setMessages([]);
+    setInput('');
+    setSelectedModel('claude-4-sonnet');
+    setUseReasoning(false);
+    setSelectedAgents([]);
+    setSeed(0);
+    setAspectRatio('1:1');
+    setNegativePrompt('');
   };
 
   const handleRetry = () => {
