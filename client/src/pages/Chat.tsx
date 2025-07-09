@@ -105,6 +105,7 @@ const Chat: React.FC = () => {
   }, [chatStatus, imageStatus]);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,7 +114,11 @@ const Chat: React.FC = () => {
     }
   }, [isLoading]);
 
-  const handleClear = () => {
+  const handleNewChat = () => {
+    // Abort any active requests
+    stop();
+
+    // Reset all state to defaults
     setMessages([]);
     setInput('');
     setSelectedModel('claude-4-sonnet');
@@ -136,17 +141,9 @@ const Chat: React.FC = () => {
     setSelectedAgents(predefinedPrompt.tools);
     setInput(predefinedPrompt.prompt);
 
-    // Submit the prompt after a brief delay to ensure state is updated
-    setTimeout(async () => {
-      setIsLoading(true);
-      try {
-        await handleSubmit();
-        setTimeout(scrollToBottom, 100);
-      } catch (error) {
-        console.error('Error submitting predefined prompt:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    // Submit the form after a brief delay to ensure state is updated
+    setTimeout(() => {
+      formRef.current?.requestSubmit();
     }, 100);
   };
 
@@ -201,13 +198,12 @@ const Chat: React.FC = () => {
         )}
       >
         <div className='bg-white rounded-xl shadow-lg w-full h-full flex flex-col overflow-hidden'>
-          {/* Header with New Chat button */}
           <div className='flex justify-end p-4 border-b border-gray-100'>
             <button
               type='button'
-              onClick={handleClear}
+              onClick={handleNewChat}
               className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-heroku-purple-30 text-white hover:bg-heroku-purple-20 focus:outline-none focus:ring-2 focus:ring-heroku-purple-30 disabled:opacity-50 text-xs'
-              disabled={messages.length === 0 || isLoading}
+              disabled={messages.length === 0}
             >
               <PlusIcon className='h-3 w-3' />
               New Chat
@@ -313,7 +309,7 @@ const Chat: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
           <div className='border-t bg-white p-4 space-y-4'>
-            <form onSubmit={handleFormSubmit} className='flex flex-col gap-3'>
+            <form ref={formRef} onSubmit={handleFormSubmit} className='flex flex-col gap-3'>
               <div className='flex gap-3'>
                 <input
                   ref={inputRef}
