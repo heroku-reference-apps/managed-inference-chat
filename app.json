@@ -1,0 +1,49 @@
+{
+  "name": "Managed Inference Chat UI",
+  "description": "A React-based chat interface for Heroku's Managed Inference and Agents service",
+  "keywords": ["react", "typescript", "chat", "heroku", "inference"],
+  "website": "https://www.heroku.com/ai",
+  "repository": "https://github.com/heroku-reference-apps/managed-inference-chat",
+  "success_url": "/",
+  "scripts": {
+    "postdeploy": "pnpm build"
+  },
+  "env": {
+    "API_SECRET": {
+      "description": "A secure random key for HMAC signing"
+    },
+    "VITE_API_SECRET": {
+      "description": "A secure random key for HMAC signing"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-inference:claude-4-sonnet",
+      "as": "INFERENCE_4"
+    },
+    {
+      "plan": "heroku-inference:claude-3-7-sonnet",
+      "as": "INFERENCE_3_7"
+    },
+    {
+      "plan": "heroku-inference:claude-3-5-sonnet-latest",
+      "as": "INFERENCE_3_5"
+    },
+    {
+      "plan": "heroku-inference:stable-image-ultra",
+      "as": "DIFFUSION"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "stack": "heroku-24"
+}
