@@ -4,6 +4,8 @@
 
 A React-based chat interface for Heroku's Managed Inference and Agents service.
 
+![Screenshot](screenshot.png)
+
 ## Features
 
 - Modern React 18 and React Router v7 application with TypeScript
