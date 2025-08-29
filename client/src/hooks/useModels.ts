@@ -23,9 +23,12 @@ export const useModels = () => {
         setError(err instanceof Error ? err.message : 'Unknown error');
         // Fallback to hardcoded models if API fails
         setModels([
-          'claude-3-5-sonnet-latest',
-          'claude-3-7-sonnet',
           'claude-4-sonnet',
+          'claude-3-7-sonnet',
+          'claude-3-5-sonnet-latest',
+          'nova-lite',
+          'nova-pro',
+          'gpt-oss-120b',
           'stable-image-ultra',
         ]);
       } finally {
