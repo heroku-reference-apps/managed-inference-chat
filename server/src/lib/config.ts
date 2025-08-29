@@ -34,6 +34,18 @@ export const config: Config = {
       INFERENCE_URL: process.env.INFERENCE_4_URL || 'https://us.inference.heroku.com',
       API_KEY: process.env.INFERENCE_4_KEY || 'inf-1234567890',
     },
+    'nova-lite': {
+      INFERENCE_URL: process.env.INFERENCE_NOVA_LITE_URL || 'https://us.inference.heroku.com',
+      API_KEY: process.env.INFERENCE_NOVA_LITE_KEY || 'inf-1234567890',
+    },
+    'nova-pro': {
+      INFERENCE_URL: process.env.INFERENCE_NOVA_PRO_URL || 'https://us.inference.heroku.com',
+      API_KEY: process.env.INFERENCE_NOVA_PRO_KEY || 'inf-1234567890',
+    },
+    'gpt-oss-120b': {
+      INFERENCE_URL: process.env.INFERENCE_GPT_OSS_URL || 'https://us.inference.heroku.com',
+      API_KEY: process.env.INFERENCE_GPT_OSS_KEY || 'inf-1234567890',
+    },
     'stable-image-ultra': {
       DIFFUSION_URL: process.env.DIFFUSION_URL || 'https://us.inference.heroku.com',
       API_KEY: process.env.DIFFUSION_KEY || 'inf-1234567890',
@@ -85,6 +97,18 @@ export const getModels = () => {
 
   if (process.env.DIFFUSION_URL) {
     availableModels.push('stable-image-ultra');
+  }
+
+  if (process.env.INFERENCE_NOVA_LITE_URL) {
+    availableModels.push('nova-lite');
+  }
+
+  if (process.env.INFERENCE_NOVA_PRO_URL) {
+    availableModels.push('nova-pro');
+  }
+
+  if (process.env.INFERENCE_GPT_OSS_URL) {
+    availableModels.push('gpt-oss-120b');
   }
 
   return availableModels;

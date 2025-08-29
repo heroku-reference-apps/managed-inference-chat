@@ -30,6 +30,18 @@
       "as": "INFERENCE_3_5"
     },
     {
+      "plan": "heroku-inference:nova-lite",
+      "as": "INFERENCE_NOVA_LITE"
+    },
+    {
+      "plan": "heroku-inference:nova-pro",
+      "as": "INFERENCE_NOVA_PRO"
+    },
+    {
+      "plan": "heroku-inference:gpt-oss-120b",
+      "as": "INFERENCE_GPT_OSS"
+    },
+    {
       "plan": "heroku-inference:stable-image-ultra",
       "as": "DIFFUSION"
     }

@@ -26,9 +26,12 @@ import { PREDEFINED_PROMPTS } from '@/constants/predefinedPrompts';
 
 const getModelDisplayName = (modelId: ModelType): string => {
   const displayNames: Record<ModelType, string> = {
-    'claude-3-5-sonnet-latest': 'Claude 3.5 Sonnet',
-    'claude-3-7-sonnet': 'Claude 3.7 Sonnet',
     'claude-4-sonnet': 'Claude 4 Sonnet',
+    'claude-3-7-sonnet': 'Claude 3.7 Sonnet',
+    'claude-3-5-sonnet-latest': 'Claude 3.5 Sonnet',
+    'nova-lite': 'Nova Lite',
+    'nova-pro': 'Nova Pro',
+    'gpt-oss-120b': 'gpt-oss 120b',
     'stable-image-ultra': 'Stable Image Ultra',
   };
   return displayNames[modelId] || modelId;
@@ -89,7 +92,7 @@ const Chat: React.FC = () => {
   });
 
   useEffect(() => {
-    if (selectedModel === 'claude-3-5-sonnet-latest' || selectedModel === 'stable-image-ultra') {
+    if (selectedModel !== 'claude-4-sonnet' && selectedModel !== 'claude-3-7-sonnet') {
       setUseReasoning(false);
     }
   }, [selectedModel]);
