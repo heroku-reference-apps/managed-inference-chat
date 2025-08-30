@@ -1,82 +1,108 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
+import '../types/session.js';
 
-const API_SECRET = process.env.API_SECRET || 'your-secret-key-here';
-const APP_ID = 'mia-chat-app';
-const MAX_TIMESTAMP_DIFF = 5 * 60 * 1000; // 5 minutes
+const CSRF_SECRET = process.env.CSRF_SECRET || 'your-csrf-secret-key-here';
+const TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour
 
-const usedNonces = new Set<string>();
-const nonceCleanupInterval = setInterval(
-  () => {
-    usedNonces.clear();
-  },
-  10 * 60 * 1000
-); // Clean up every 10 minutes
-
-export interface SecurityHeaders {
-  'x-app-id': string;
-  'x-timestamp': string;
-  'x-signature': string;
-  'x-nonce': string;
+export interface CSRFHeaders {
+  'x-csrf-token': string;
 }
 
+/**
+ * Generate a cryptographically signed CSRF token
+ */
+export function generateCSRFToken(): string {
+  const timestamp = Date.now();
+  const randomValue = randomBytes(16).toString('hex');
+
+  // Create payload: timestamp:randomValue
+  const payload = `${timestamp}:${randomValue}`;
+
+  // Sign the payload with HMAC
+  const signature = createHmac('sha256', CSRF_SECRET).update(payload).digest('hex');
+
+  // Return base64 encoded token: base64(timestamp:randomValue:signature)
+  const token = Buffer.from(`${payload}:${signature}`).toString('base64');
+
+  return token;
+}
+
+/**
+ * Verify CSRF token from request headers against session token
+ */
+export async function verifyCSRFToken(
+  request: FastifyRequest,
+  reply: FastifyReply
+): Promise<boolean> {
+  const headers = request.headers as unknown as CSRFHeaders;
+  const clientToken = headers['x-csrf-token'];
+
+  // Check if CSRF token is provided in headers
+  if (!clientToken) {
+    reply.code(403).send({ error: 'CSRF token missing' });
+    return false;
+  }
+
+  // Check if session exists and has a CSRF token
+  if (!request.session || !request.session.csrfToken) {
+    reply.code(403).send({ error: 'No valid session or CSRF token' });
+    return false;
+  }
+
+  const sessionToken = request.session.csrfToken;
+
+  // Verify that the client token matches the session token
+  if (!timingSafeEqual(Buffer.from(clientToken), Buffer.from(sessionToken))) {
+    reply.code(403).send({ error: 'CSRF token mismatch' });
+    return false;
+  }
+
+  // Verify the token signature and expiry
+  try {
+    // Decode the base64 token
+    const decoded = Buffer.from(clientToken, 'base64').toString('utf8');
+    const parts = decoded.split(':');
+
+    if (parts.length !== 3) {
+      reply.code(403).send({ error: 'Invalid CSRF token format' });
+      return false;
+    }
+
+    const [timestamp, randomValue, signature] = parts;
+    const payload = `${timestamp}:${randomValue}`;
+
+    // Verify the signature
+    const expectedSignature = createHmac('sha256', CSRF_SECRET).update(payload).digest('hex');
+
+    if (!timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+      reply.code(403).send({ error: 'Invalid CSRF token signature' });
+      return false;
+    }
+
+    // Check if token has expired
+    const tokenTime = parseInt(timestamp);
+    const now = Date.now();
+
+    if (now - tokenTime > TOKEN_EXPIRY) {
+      reply.code(403).send({ error: 'CSRF token expired' });
+      return false;
+    }
+
+    return true;
+  } catch (_error) {
+    reply.code(403).send({ error: 'Invalid CSRF token' });
+    return false;
+  }
+}
+
+/**
+ * Verify CSRF token for protected endpoints
+ */
 export async function verifyRequest(
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<boolean> {
-  const headers = request.headers as unknown as SecurityHeaders;
-  const {
-    'x-app-id': appId,
-    'x-timestamp': timestamp,
-    'x-signature': signature,
-    'x-nonce': nonce,
-  } = headers;
-
-  // Check required headers
-  if (!appId || !timestamp || !signature || !nonce) {
-    reply.code(401).send({ error: 'Missing security headers' });
-    return false;
-  }
-
-  // Verify app ID
-  if (appId !== APP_ID) {
-    reply.code(401).send({ error: 'Invalid app ID' });
-    return false;
-  }
-
-  // Check timestamp (prevent replay attacks)
-  const now = Date.now();
-  const requestTime = parseInt(timestamp);
-  if (Math.abs(now - requestTime) > MAX_TIMESTAMP_DIFF) {
-    reply.code(401).send({ error: 'Request timestamp invalid' });
-    return false;
-  }
-
-  // Check nonce (prevent replay attacks)
-  if (usedNonces.has(nonce)) {
-    reply.code(401).send({ error: 'Nonce already used' });
-    return false;
-  }
-
-  // Verify signature
-  const method = request.method;
-  const path = request.url;
-  const body = request.body ? JSON.stringify(request.body) : '';
-  const payload = `${method}:${path}:${timestamp}:${nonce}${body ? `:${body}` : ''}`;
-
-  const expectedSignature = createHmac('sha256', API_SECRET).update(payload).digest('hex');
-
-  if (!timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-    reply.code(401).send({ error: 'Invalid signature' });
-    return false;
-  }
-
-  // Mark nonce as used
-  usedNonces.add(nonce);
-  return true;
+  // Only verify CSRF token - CORS handles origin verification
+  return await verifyCSRFToken(request, reply);
 }
-
-// Clean up interval on process exit
-process.on('exit', () => {
-  clearInterval(nonceCleanupInterval);
-});

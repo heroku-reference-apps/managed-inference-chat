@@ -1,47 +1,109 @@
-import CryptoJS from 'crypto-js';
-
-const API_SECRET = import.meta.env.VITE_API_SECRET || 'your-secret-key-here';
-const APP_ID = 'mia-chat-app';
-
-export interface SecurityHeaders {
-  'X-App-ID': string;
-  'X-Timestamp': string;
-  'X-Signature': string;
-  'X-Nonce': string;
+export interface CSRFHeaders {
+  'X-CSRF-Token': string;
 }
 
-export function generateSecurityHeaders(
-  method: string,
-  path: string,
-  body?: string
-): SecurityHeaders {
-  const timestamp = Date.now().toString();
-  const nonce = CryptoJS.lib.WordArray.random(16).toString();
+// Cache for initialization promise to avoid multiple concurrent requests
+let initPromise: Promise<void> | null = null;
 
-  // Create signature payload
-  const payload = `${method}:${path}:${timestamp}:${nonce}${body ? `:${body}` : ''}`;
-  const signature = CryptoJS.HmacSHA256(payload, API_SECRET).toString();
+/**
+ * Get CSRF token from cookie
+ */
+function getCSRFTokenFromCookie(): string | null {
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'csrf-token') {
+      return decodeURIComponent(value);
+    }
+  }
+  return null;
+}
+
+/**
+ * Initialize CSRF token by calling the server endpoint
+ */
+async function initializeCSRF(): Promise<void> {
+  // If already initializing, return the existing promise
+  if (initPromise) {
+    return initPromise;
+  }
+
+  initPromise = fetch('/api/csrf-init', {
+    method: 'GET',
+    credentials: 'same-origin',
+  }).then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to initialize CSRF token');
+    }
+  });
+
+  return initPromise;
+}
+
+/**
+ * Get a valid CSRF token, initializing lazily if needed
+ */
+async function getCSRFToken(): Promise<string> {
+  // Try to get token from cookie first
+  let token = getCSRFTokenFromCookie();
+
+  // If no token, initialize CSRF and try again
+  if (!token) {
+    await initializeCSRF();
+    token = getCSRFTokenFromCookie();
+  }
+
+  if (!token) {
+    throw new Error('Failed to obtain CSRF token');
+  }
+
+  return token;
+}
+
+/**
+ * Generate security headers with CSRF token
+ */
+export async function generateSecurityHeaders(): Promise<CSRFHeaders> {
+  const csrfToken = await getCSRFToken();
 
   return {
-    'X-App-ID': APP_ID,
-    'X-Timestamp': timestamp,
-    'X-Signature': signature,
-    'X-Nonce': nonce,
+    'X-CSRF-Token': csrfToken,
   };
 }
 
+/**
+ * Make a secure request with CSRF protection
+ */
 export async function secureRequest(url: string, options: RequestInit = {}): Promise<Response> {
-  const method = options.method || 'GET';
-  const body = options.body as string;
-  const path = new URL(url, window.location.origin).pathname;
+  try {
+    const securityHeaders = await generateSecurityHeaders();
 
-  const securityHeaders = generateSecurityHeaders(method, path, body);
-
-  return fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      ...securityHeaders,
-    },
-  });
+    return fetch(url, {
+      ...options,
+      credentials: 'same-origin', // Ensure cookies are sent for same-origin requests
+      headers: {
+        ...options.headers,
+        ...securityHeaders,
+      },
+    });
+  } catch (error) {
+    // If CSRF token fetch fails, clear the init promise and retry once
+    if (initPromise) {
+      initPromise = null; // Clear the cached promise to allow retry
+      try {
+        const securityHeaders = await generateSecurityHeaders();
+        return fetch(url, {
+          ...options,
+          credentials: 'same-origin',
+          headers: {
+            ...options.headers,
+            ...securityHeaders,
+          },
+        });
+      } catch (retryError) {
+        throw new Error(`Failed to make secure request: ${retryError}`);
+      }
+    }
+    throw error;
+  }
 }

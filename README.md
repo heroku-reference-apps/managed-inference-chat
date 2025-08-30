@@ -9,12 +9,15 @@ A React-based chat interface for Heroku's Managed Inference and Agents service.
 ## Features
 
 - Modern React 18 and React Router v7 application with TypeScript
-- Real-time chat interface
+- Real-time chat interface with streaming responses
 - Fastify server for production deployment
 - Fully configured for Heroku deployment
-- HMAC-based request authentication for API security
-- Content Security Policy and security headers
-- Rate limiting with IP and user agent tracking
+- **Enhanced Security Features**:
+  - Session-based CSRF protection with secure cookies
+  - Strict CORS same-origin policy
+  - Content Security Policy and comprehensive security headers
+  - Rate limiting with IP and user agent tracking
+- Automatic security initialization on app startup
 
 ## Project Structure
 
@@ -48,12 +51,14 @@ A React-based chat interface for Heroku's Managed Inference and Agents service.
 
    ```bash
    # Create your .env file with the required variables
-   # API_SECRET: A secure random key for HMAC signing (generate with: openssl rand -hex 32)
-   # VITE_API_SECRET: Same as API_SECRET for client-side usage
+   # SESSION_SECRET: A secure random key for session encryption (generate with: openssl rand -hex 32)
+   # CSRF_SECRET: A secure random key for CSRF token signing (generate with: openssl rand -hex 32)
+   # NODE_ENV: Set to 'production' for secure cookies in production
 
    # Example .env file:
-   API_SECRET=your-very-secure-secret-key-here
-   VITE_API_SECRET=your-very-secure-secret-key-here
+   SESSION_SECRET=your-very-secure-session-secret-here
+   CSRF_SECRET=your-very-secure-csrf-secret-here
+   NODE_ENV=development
    ```
 
 1. Start the development server:
@@ -69,12 +74,18 @@ A React-based chat interface for Heroku's Managed Inference and Agents service.
 
 This application implements multiple layers of security:
 
-### API Request Authentication
+### CSRF Protection & Session Security
 
-- **HMAC Signing**: All API requests are signed using HMAC-SHA256 with a secret key
-- **Timestamp Validation**: Requests must be made within 5 minutes to prevent replay attacks
-- **Nonce Protection**: Each request must include a unique nonce to prevent duplicate requests
-- **Request Integrity**: Any tampering with the request body or headers invalidates the signature
+- **Session-Based CSRF Tokens**: Cryptographically signed tokens stored in secure HTTP-only session
+  cookies
+- **Double-Submit Cookie Pattern**: Tokens verified against both session storage and request headers
+- **Secure Cookie Configuration**:
+  - `httpOnly: true` - Prevents XSS attacks by blocking JavaScript access
+  - `sameSite: 'strict'` - Prevents CSRF attacks from external sites
+  - `secure: true` in production - HTTPS-only cookies
+  - `rolling: true` - Session refreshes on each request
+- **Token Expiry**: CSRF tokens automatically expire after 1 hour
+- **No Token Exposure**: No public API endpoints expose CSRF tokens directly
 
 ### Security Headers
 
@@ -83,6 +94,13 @@ This application implements multiple layers of security:
 - **X-Content-Type-Options**: Prevents MIME type sniffing
 - **Strict-Transport-Security**: Enforces HTTPS connections
 - **X-XSS-Protection**: Enables browser XSS filtering
+
+### CORS Protection
+
+- **Strict Same-Origin Policy**: Only allows requests from the same origin
+- **Development Mode**: Allows localhost and 127.0.0.1 for local development
+- **Production Mode**: Only allows origins specified in `ALLOWED_ORIGINS` environment variable
+- **Credential Support**: Properly configured to work with session cookies
 
 ### Rate Limiting
 
@@ -94,10 +112,14 @@ This application implements multiple layers of security:
 
 Make sure to set secure values for these environment variables:
 
-- `API_SECRET`: A cryptographically secure random key (minimum 32 characters)
-- `VITE_API_SECRET`: Must match `API_SECRET` for client-side request signing
+- `SESSION_SECRET`: A cryptographically secure random key for session encryption (minimum 32
+  characters)
+- `CSRF_SECRET`: A cryptographically secure random key for CSRF token signing (minimum 32
+  characters)
+- `NODE_ENV`: Set to 'production' to enable secure cookies and HTTPS-only mode
+- `ALLOWED_ORIGINS`: Comma-separated list of allowed origins for production CORS (optional)
 
-Generate a secure key using: `openssl rand -hex 32`
+Generate secure keys using: `openssl rand -hex 32`
 
 ## Building for Production
 
@@ -135,6 +157,9 @@ Generate a secure key using: `openssl rand -hex 32`
    heroku addons:create heroku-inference:claude-4-sonnet --as INFERENCE_4
    heroku addons:create heroku-inference:claude-3-7-sonnet --as INFERENCE_3_7
    heroku addons:create heroku-inference:claude-3-5-sonnet-latest --as INFERENCE_3_5
+   heroku addons:create heroku-inference:nova-lite --as INFERENCE_NOVA_LITE
+   heroku addons:create heroku-inference:nova-pro --as INFERENCE_NOVA_PRO
+   heroku addons:create heroku-inference:gpt-oss-120b --as INFERENCE_GPT_OSS
    heroku addons:create heroku-inference:stable-image-ultra --as DIFFUSION
    ```
 
