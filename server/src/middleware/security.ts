@@ -3,7 +3,7 @@ import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import '../types/session.js';
 
 const CSRF_SECRET = process.env.CSRF_SECRET || 'your-csrf-secret-key-here';
-const TOKEN_EXPIRY = 60 * 60 * 1000; // 1 hour
+const TOKEN_EXPIRY = 10 * 60 * 1000; // 10 minutes
 
 export interface CSRFHeaders {
   'x-csrf-token': string;
@@ -29,6 +29,41 @@ export function generateCSRFToken(): string {
 }
 
 /**
+ * Clear session and send error response for CSRF token issues
+ */
+function clearSessionAndSendError(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  error: string,
+  code: 'missing' | 'expired' | 'invalid' | 'mismatch' = 'invalid'
+): boolean {
+  // Clear the session to force re-initialization
+  if (request.session) {
+    void request.session.destroy();
+  }
+
+  // Clear both CSRF token and session cookies
+  reply.clearCookie('csrf-token', {
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+
+  reply.clearCookie('sessionId', {
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+
+  reply.code(403).send({
+    error,
+    code: `csrf_${code}`,
+    requiresReauth: true,
+  });
+  return false;
+}
+
+/**
  * Verify CSRF token from request headers against session token
  */
 export async function verifyCSRFToken(
@@ -40,22 +75,23 @@ export async function verifyCSRFToken(
 
   // Check if CSRF token is provided in headers
   if (!clientToken) {
-    reply.code(403).send({ error: 'CSRF token missing' });
-    return false;
+    return clearSessionAndSendError(request, reply, 'CSRF token missing', 'missing');
   }
 
   // Check if session exists and has a CSRF token
-  if (!request.session || !request.session.csrfToken) {
-    reply.code(403).send({ error: 'No valid session or CSRF token' });
-    return false;
+  if (!request.session) {
+    return clearSessionAndSendError(request, reply, 'No session found', 'invalid');
+  }
+
+  if (!request.session.csrfToken) {
+    return clearSessionAndSendError(request, reply, 'No CSRF token in session', 'invalid');
   }
 
   const sessionToken = request.session.csrfToken;
 
   // Verify that the client token matches the session token
   if (!timingSafeEqual(Buffer.from(clientToken), Buffer.from(sessionToken))) {
-    reply.code(403).send({ error: 'CSRF token mismatch' });
-    return false;
+    return clearSessionAndSendError(request, reply, 'CSRF token mismatch', 'mismatch');
   }
 
   // Verify the token signature and expiry
@@ -65,8 +101,7 @@ export async function verifyCSRFToken(
     const parts = decoded.split(':');
 
     if (parts.length !== 3) {
-      reply.code(403).send({ error: 'Invalid CSRF token format' });
-      return false;
+      return clearSessionAndSendError(request, reply, 'Invalid CSRF token format', 'invalid');
     }
 
     const [timestamp, randomValue, signature] = parts;
@@ -76,8 +111,7 @@ export async function verifyCSRFToken(
     const expectedSignature = createHmac('sha256', CSRF_SECRET).update(payload).digest('hex');
 
     if (!timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-      reply.code(403).send({ error: 'Invalid CSRF token signature' });
-      return false;
+      return clearSessionAndSendError(request, reply, 'Invalid CSRF token signature', 'invalid');
     }
 
     // Check if token has expired
@@ -85,14 +119,12 @@ export async function verifyCSRFToken(
     const now = Date.now();
 
     if (now - tokenTime > TOKEN_EXPIRY) {
-      reply.code(403).send({ error: 'CSRF token expired' });
-      return false;
+      return clearSessionAndSendError(request, reply, 'CSRF token expired', 'expired');
     }
 
     return true;
   } catch (_error) {
-    reply.code(403).send({ error: 'Invalid CSRF token' });
-    return false;
+    return clearSessionAndSendError(request, reply, 'Invalid CSRF token', 'invalid');
   }
 }
 

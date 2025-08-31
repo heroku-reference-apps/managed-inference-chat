@@ -53,12 +53,10 @@ A React-based chat interface for Heroku's Managed Inference and Agents service.
    # Create your .env file with the required variables
    # SESSION_SECRET: A secure random key for session encryption (generate with: openssl rand -hex 32)
    # CSRF_SECRET: A secure random key for CSRF token signing (generate with: openssl rand -hex 32)
-   # NODE_ENV: Set to 'production' for secure cookies in production
 
    # Example .env file:
    SESSION_SECRET=your-very-secure-session-secret-here
    CSRF_SECRET=your-very-secure-csrf-secret-here
-   NODE_ENV=development
    ```
 
 1. Start the development server:
@@ -70,44 +68,6 @@ A React-based chat interface for Heroku's Managed Inference and Agents service.
 
    The application will be available at `http://localhost:3000`
 
-## Security
-
-This application implements multiple layers of security:
-
-### CSRF Protection & Session Security
-
-- **Session-Based CSRF Tokens**: Cryptographically signed tokens stored in secure HTTP-only session
-  cookies
-- **Double-Submit Cookie Pattern**: Tokens verified against both session storage and request headers
-- **Secure Cookie Configuration**:
-  - `httpOnly: true` - Prevents XSS attacks by blocking JavaScript access
-  - `sameSite: 'strict'` - Prevents CSRF attacks from external sites
-  - `secure: true` in production - HTTPS-only cookies
-  - `rolling: true` - Session refreshes on each request
-- **Token Expiry**: CSRF tokens automatically expire after 1 hour
-- **No Token Exposure**: No public API endpoints expose CSRF tokens directly
-
-### Security Headers
-
-- **Content Security Policy (CSP)**: Prevents XSS attacks
-- **X-Frame-Options**: Prevents clickjacking attacks
-- **X-Content-Type-Options**: Prevents MIME type sniffing
-- **Strict-Transport-Security**: Enforces HTTPS connections
-- **X-XSS-Protection**: Enables browser XSS filtering
-
-### CORS Protection
-
-- **Strict Same-Origin Policy**: Only allows requests from the same origin
-- **Development Mode**: Allows localhost and 127.0.0.1 for local development
-- **Production Mode**: Only allows origins specified in `ALLOWED_ORIGINS` environment variable
-- **Credential Support**: Properly configured to work with session cookies
-
-### Rate Limiting
-
-- **Per-IP + User Agent**: Rate limits are applied per IP address and user agent combination
-- **Configurable Limits**: 20 requests per minute by default
-- **Sliding Window**: Uses a sliding window approach for smooth rate limiting
-
 ### Environment Variables
 
 Make sure to set secure values for these environment variables:
@@ -117,7 +77,6 @@ Make sure to set secure values for these environment variables:
 - `CSRF_SECRET`: A cryptographically secure random key for CSRF token signing (minimum 32
   characters)
 - `NODE_ENV`: Set to 'production' to enable secure cookies and HTTPS-only mode
-- `ALLOWED_ORIGINS`: Comma-separated list of allowed origins for production CORS (optional)
 
 Generate secure keys using: `openssl rand -hex 32`
 

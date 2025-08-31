@@ -20,48 +20,22 @@ const fastify = Fastify({
   logger: true,
 });
 
-// Register CORS with strict same-origin policy
-fastify.register(fastifyCors, {
-  origin: (origin, callback) => {
-    // Allow requests with no origin (same-origin requests)
-    if (!origin) return callback(null, true);
-
-    // In development, allow localhost
-    if (process.env.NODE_ENV !== 'production') {
-      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-        return callback(null, true);
-      }
-    }
-
-    // In production, only allow the specific domain
-    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    // Reject all other origins
-    callback(new Error('Not allowed by CORS'), false);
-  },
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
-  credentials: true,
-  maxAge: 86400, // 24 hours
-});
-
 // Register cookie support
 fastify.register(fastifyCookie);
 
 // Register session with secure cookies
 fastify.register(fastifySession, {
   secret: process.env.SESSION_SECRET || 'your-session-secret-key-change-this-in-production',
+  cookieName: 'sessionId', // Explicit session cookie name
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
     httpOnly: true, // Prevent XSS attacks
-    sameSite: 'strict', // CSRF protection
+    sameSite: 'strict', // Always use strict for better security
     maxAge: 60 * 60 * 1000, // 1 hour
     path: '/', // Available for all paths
+    domain: undefined, // Let browser handle domain automatically
   },
-  saveUninitialized: false, // Don't save empty sessions
+  saveUninitialized: true, // Save sessions even when empty to ensure session cookie is set
   rolling: true, // Reset expiry on each request
 });
 
@@ -87,14 +61,25 @@ fastify.register(fastifyStatic, {
   prefix: '/',
 });
 
-// Register CSRF route (no protection needed)
-fastify.register(csrfRoute);
+// Register API routes with CORS protection
+fastify.register(async function (fastify) {
+  // Apply CORS only to API routes
+  await fastify.register(fastifyCors, {
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? true
+        : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
+    credentials: true,
+    maxAge: 86400, // 24 hours
+  });
 
-// Register chat route with rate limiting
-fastify.register(chatRoute);
-
-// Register images route with rate limiting
-fastify.register(imagesRoute);
+  // Register API routes
+  await fastify.register(csrfRoute);
+  await fastify.register(chatRoute);
+  await fastify.register(imagesRoute);
+});
 
 // Run the server
 const start = async () => {
