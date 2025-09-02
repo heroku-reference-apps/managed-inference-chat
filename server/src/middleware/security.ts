@@ -2,7 +2,14 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import '../types/session.js';
 
-const CSRF_SECRET = process.env.CSRF_SECRET || 'your-csrf-secret-key-here';
+let CSRF_SECRET: string | undefined;
+if (process.env.CSRF_SECRET) {
+  CSRF_SECRET = process.env.CSRF_SECRET;
+} else if (process.env.NODE_ENV === 'production') {
+  throw new Error('CSRF_SECRET environment variable must be set in production.');
+} else {
+  CSRF_SECRET = 'your-csrf-secret-key-here';
+}
 const TOKEN_EXPIRY = 10 * 60 * 1000; // 10 minutes
 
 export interface CSRFHeaders {
