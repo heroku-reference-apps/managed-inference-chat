@@ -23,9 +23,13 @@ const fastify = Fastify({
 // Register cookie support
 fastify.register(fastifyCookie);
 
+// Ensure SESSION_SECRET is set in production
+if (!process.env.SESSION_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('SESSION_SECRET environment variable must be set in production.');
+}
 // Register session with secure cookies
 fastify.register(fastifySession, {
-  secret: process.env.SESSION_SECRET || 'your-session-secret-key-change-this-in-production',
+  secret: process.env.SESSION_SECRET || 'your-session-secret-key-change-this-in-development',
   cookieName: 'sessionId', // Explicit session cookie name
   cookie: {
     secure: process.env.NODE_ENV === 'production', // HTTPS only in production
