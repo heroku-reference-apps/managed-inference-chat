@@ -2,13 +2,9 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { randomBytes, createHmac, timingSafeEqual } from 'node:crypto';
 import '../types/session.js';
 
-let CSRF_SECRET: string | undefined;
-if (process.env.CSRF_SECRET) {
-  CSRF_SECRET = process.env.CSRF_SECRET;
-} else if (process.env.NODE_ENV === 'production') {
-  throw new Error('CSRF_SECRET environment variable must be set in production.');
-} else {
-  CSRF_SECRET = 'your-csrf-secret-key-here';
+const CSRF_SECRET = process.env.CSRF_SECRET;
+if (!CSRF_SECRET) {
+  throw new Error('CSRF_SECRET environment variable must be set');
 }
 const TOKEN_EXPIRY = 10 * 60 * 1000; // 10 minutes
 
@@ -27,7 +23,9 @@ export function generateCSRFToken(): string {
   const payload = `${timestamp}:${randomValue}`;
 
   // Sign the payload with HMAC
-  const signature = createHmac('sha256', CSRF_SECRET).update(payload).digest('hex');
+  const signature = createHmac('sha256', CSRF_SECRET as string)
+    .update(payload)
+    .digest('hex');
 
   // Return base64 encoded token: base64(timestamp:randomValue:signature)
   const token = Buffer.from(`${payload}:${signature}`).toString('base64');
@@ -115,7 +113,9 @@ export async function verifyCSRFToken(
     const payload = `${timestamp}:${randomValue}`;
 
     // Verify the signature
-    const expectedSignature = createHmac('sha256', CSRF_SECRET).update(payload).digest('hex');
+    const expectedSignature = createHmac('sha256', CSRF_SECRET as string)
+      .update(payload)
+      .digest('hex');
 
     if (!timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
       return clearSessionAndSendError(request, reply, 'Invalid CSRF token signature', 'invalid');
