@@ -9,12 +9,15 @@ A React-based chat interface for Heroku's Managed Inference and Agents service.
 ## Features
 
 - Modern React 18 and React Router v7 application with TypeScript
-- Real-time chat interface
+- Real-time chat interface with streaming responses
 - Fastify server for production deployment
 - Fully configured for Heroku deployment
-- HMAC-based request authentication for API security
-- Content Security Policy and security headers
-- Rate limiting with IP and user agent tracking
+- **Enhanced Security Features**:
+  - Session-based CSRF protection with secure cookies
+  - Strict CORS same-origin policy
+  - Content Security Policy and comprehensive security headers
+  - Rate limiting with IP and user agent tracking
+- Automatic security initialization on app startup
 
 ## Project Structure
 
@@ -48,12 +51,12 @@ A React-based chat interface for Heroku's Managed Inference and Agents service.
 
    ```bash
    # Create your .env file with the required variables
-   # API_SECRET: A secure random key for HMAC signing (generate with: openssl rand -hex 32)
-   # VITE_API_SECRET: Same as API_SECRET for client-side usage
+   # SESSION_SECRET: A secure random key for session encryption (generate with: openssl rand -hex 32)
+   # CSRF_SECRET: A secure random key for CSRF token signing (generate with: openssl rand -hex 32)
 
    # Example .env file:
-   API_SECRET=your-very-secure-secret-key-here
-   VITE_API_SECRET=your-very-secure-secret-key-here
+   SESSION_SECRET=your-very-secure-session-secret-here
+   CSRF_SECRET=your-very-secure-csrf-secret-here
    ```
 
 1. Start the development server:
@@ -65,39 +68,17 @@ A React-based chat interface for Heroku's Managed Inference and Agents service.
 
    The application will be available at `http://localhost:3000`
 
-## Security
-
-This application implements multiple layers of security:
-
-### API Request Authentication
-
-- **HMAC Signing**: All API requests are signed using HMAC-SHA256 with a secret key
-- **Timestamp Validation**: Requests must be made within 5 minutes to prevent replay attacks
-- **Nonce Protection**: Each request must include a unique nonce to prevent duplicate requests
-- **Request Integrity**: Any tampering with the request body or headers invalidates the signature
-
-### Security Headers
-
-- **Content Security Policy (CSP)**: Prevents XSS attacks
-- **X-Frame-Options**: Prevents clickjacking attacks
-- **X-Content-Type-Options**: Prevents MIME type sniffing
-- **Strict-Transport-Security**: Enforces HTTPS connections
-- **X-XSS-Protection**: Enables browser XSS filtering
-
-### Rate Limiting
-
-- **Per-IP + User Agent**: Rate limits are applied per IP address and user agent combination
-- **Configurable Limits**: 20 requests per minute by default
-- **Sliding Window**: Uses a sliding window approach for smooth rate limiting
-
 ### Environment Variables
 
 Make sure to set secure values for these environment variables:
 
-- `API_SECRET`: A cryptographically secure random key (minimum 32 characters)
-- `VITE_API_SECRET`: Must match `API_SECRET` for client-side request signing
+- `SESSION_SECRET`: A cryptographically secure random key for session encryption (minimum 32
+  characters)
+- `CSRF_SECRET`: A cryptographically secure random key for CSRF token signing (minimum 32
+  characters)
+- `NODE_ENV`: Set to 'production' to enable secure cookies and HTTPS-only mode
 
-Generate a secure key using: `openssl rand -hex 32`
+Generate secure keys using: `openssl rand -hex 32`
 
 ## Building for Production
 
@@ -135,6 +116,9 @@ Generate a secure key using: `openssl rand -hex 32`
    heroku addons:create heroku-inference:claude-4-sonnet --as INFERENCE_4
    heroku addons:create heroku-inference:claude-3-7-sonnet --as INFERENCE_3_7
    heroku addons:create heroku-inference:claude-3-5-sonnet-latest --as INFERENCE_3_5
+   heroku addons:create heroku-inference:nova-lite --as INFERENCE_NOVA_LITE
+   heroku addons:create heroku-inference:nova-pro --as INFERENCE_NOVA_PRO
+   heroku addons:create heroku-inference:gpt-oss-120b --as INFERENCE_GPT_OSS
    heroku addons:create heroku-inference:stable-image-ultra --as DIFFUSION
    ```
 

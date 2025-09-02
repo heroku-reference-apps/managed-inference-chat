@@ -9,11 +9,13 @@
     "postdeploy": "pnpm build"
   },
   "env": {
-    "API_SECRET": {
-      "description": "A secure random key for HMAC signing"
+    "SESSION_SECRET": {
+      "description": "A secure random key for session signing",
+      "generator": "secret"
     },
-    "VITE_API_SECRET": {
-      "description": "A secure random key for HMAC signing"
+    "CSRF_SECRET": {
+      "description": "A secure random key for CSRF token signing",
+      "generator": "secret"
     }
   },
   "addons": [
