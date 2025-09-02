@@ -170,8 +170,7 @@ export async function secureRequest(url: string, options: RequestInit = {}): Pro
         });
 
         return retryResponse;
-      } catch (retryError) {
-        throw new Error(`Failed to make secure request: ${retryError}`);
+        throw new Error(`Failed to make secure request: ${retryError instanceof Error ? retryError.message : retryError}`);
       } finally {
         isRetrying = false;
       }
