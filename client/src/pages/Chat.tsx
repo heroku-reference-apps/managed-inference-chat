@@ -7,16 +7,18 @@ import { PaperAirplaneIcon, StopIcon, PlusIcon } from '@heroicons/react/24/solid
 import { RiAiGenerate } from 'react-icons/ri';
 import { LoadingDots } from '@/components/LoadingDots';
 import { AgentToggle } from '@/components/AgentToggle';
+import { McpToolToggle, DEFAULT_MAX_CALLS } from '@/components/McpToolToggle';
 import { AGENTS } from '@/constants/agents';
 import { useCustomChat } from '@/hooks/useCustomChat';
 import { useImageGeneration } from '@/hooks/useImageGeneration';
 import { useModels } from '@/hooks/useModels';
+import { useMcpServers } from '@/hooks/useMcpServers';
 import type {
-  AgentType,
   ModelType,
   Message,
   ImageGenerationParams,
   PredefinedPrompt,
+  SelectedTool,
 } from '@/types/chat';
 import { CollapsibleReasoning } from '@/components/CollapsibleReasoning';
 import { CollapsibleToolExecution } from '@/components/CollapsibleToolExecution';
@@ -52,7 +54,8 @@ const ASPECT_RATIOS = [
 const Chat: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState<ModelType>('claude-4-sonnet');
   const [useReasoning, setUseReasoning] = useState(false);
-  const [selectedAgents, setSelectedAgents] = useState<AgentType[]>([]);
+  const [selectedHerokuTools, setSelectedHerokuTools] = useState<SelectedTool[]>([]);
+  const [selectedMcpTools, setSelectedMcpTools] = useState<SelectedTool[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Image generation state
@@ -62,6 +65,21 @@ const Chat: React.FC = () => {
 
   // Fetch available models from backend
   const { models: availableModels } = useModels();
+
+  // Fetch available MCP servers and tools for the selected model
+  const { mcpTools: availableMcpTools } = useMcpServers(selectedModel);
+
+  // Clear selected MCP tools when available tools change (model switch)
+  useEffect(() => {
+    setSelectedMcpTools(prev => {
+      // Keep only tools that are still available
+      const availableIds = new Set(availableMcpTools.map(t => t.id));
+      return prev.filter(t => availableIds.has(t.name));
+    });
+  }, [availableMcpTools]);
+
+  // Combine all selected tools for the chat
+  const allSelectedTools = [...selectedHerokuTools, ...selectedMcpTools];
 
   const {
     messages,
@@ -77,7 +95,7 @@ const Chat: React.FC = () => {
   } = useCustomChat({
     model: selectedModel,
     reasoning: useReasoning,
-    agents: selectedAgents,
+    tools: allSelectedTools,
   });
 
   const {
@@ -98,10 +116,10 @@ const Chat: React.FC = () => {
   }, [selectedModel]);
 
   useEffect(() => {
-    if (selectedAgents.length > 0) {
+    if (selectedHerokuTools.length > 0 || selectedMcpTools.length > 0) {
       setUseReasoning(false);
     }
-  }, [selectedAgents]);
+  }, [selectedHerokuTools, selectedMcpTools]);
 
   useEffect(() => {
     setIsLoading(chatStatus === 'loading' || imageStatus === 'loading');
@@ -126,7 +144,8 @@ const Chat: React.FC = () => {
     setInput('');
     setSelectedModel('claude-4-sonnet');
     setUseReasoning(false);
-    setSelectedAgents([]);
+    setSelectedHerokuTools([]);
+    setSelectedMcpTools([]);
     setSeed(0);
     setAspectRatio('1:1');
     setNegativePrompt('');
@@ -141,7 +160,14 @@ const Chat: React.FC = () => {
   const handlePredefinedPromptSelect = async (predefinedPrompt: PredefinedPrompt) => {
     // Set the model and tools based on the predefined prompt
     setSelectedModel(predefinedPrompt.model);
-    setSelectedAgents(predefinedPrompt.tools);
+    // Convert AgentType[] to SelectedTool[] with default max_calls
+    setSelectedHerokuTools(
+      predefinedPrompt.tools.map(toolId => ({
+        type: 'heroku_tool' as const,
+        name: toolId,
+        runtime_params: { max_calls: DEFAULT_MAX_CALLS },
+      }))
+    );
     setInput(predefinedPrompt.prompt);
 
     // Submit the form after a brief delay to ensure state is updated
@@ -351,22 +377,103 @@ const Chat: React.FC = () => {
             <div className='flex items-center gap-4 justify-end text-xs text-gray-500'>
               <div className='flex flex-col gap-2'>
                 {selectedModel !== 'stable-image-ultra' && (
-                  <div className='flex flex-wrap gap-1.5 justify-end'>
-                    {AGENTS.map(agent => (
-                      <AgentToggle
-                        key={agent.id}
-                        agent={agent}
-                        isSelected={selectedAgents.includes(agent.id)}
-                        onToggle={() => {
-                          setSelectedAgents(prev =>
-                            prev.includes(agent.id)
-                              ? prev.filter(id => id !== agent.id)
-                              : [...prev, agent.id]
+                  <div className='flex flex-col gap-1.5'>
+                    {/* Heroku Tools */}
+                    <div className='flex flex-wrap gap-1.5 justify-end'>
+                      {AGENTS.map(agent => {
+                        const selectedTool = selectedHerokuTools.find(t => t.name === agent.id);
+                        return (
+                          <AgentToggle
+                            key={agent.id}
+                            agent={agent}
+                            isSelected={!!selectedTool}
+                            maxCalls={selectedTool?.runtime_params?.max_calls ?? DEFAULT_MAX_CALLS}
+                            onToggle={() => {
+                              setSelectedHerokuTools(prev => {
+                                const isSelected = prev.some(t => t.name === agent.id);
+                                if (isSelected) {
+                                  return prev.filter(t => t.name !== agent.id);
+                                }
+                                return [
+                                  ...prev,
+                                  {
+                                    type: 'heroku_tool' as const,
+                                    name: agent.id,
+                                    runtime_params: { max_calls: DEFAULT_MAX_CALLS },
+                                  },
+                                ];
+                              });
+                            }}
+                            onMaxCallsChange={maxCalls => {
+                              setSelectedHerokuTools(prev =>
+                                prev.map(t =>
+                                  t.name === agent.id
+                                    ? {
+                                        ...t,
+                                        runtime_params: {
+                                          ...t.runtime_params,
+                                          max_calls: maxCalls,
+                                        },
+                                      }
+                                    : t
+                                )
+                              );
+                            }}
+                            disabled={isLoading}
+                          />
+                        );
+                      })}
+                    </div>
+                    {/* MCP Tools */}
+                    {availableMcpTools.length > 0 && (
+                      <div className='flex flex-wrap gap-1.5 justify-end'>
+                        {availableMcpTools.map(tool => {
+                          const selectedTool = selectedMcpTools.find(t => t.name === tool.id);
+                          return (
+                            <McpToolToggle
+                              key={tool.id}
+                              tool={tool}
+                              isSelected={!!selectedTool}
+                              maxCalls={
+                                selectedTool?.runtime_params?.max_calls ?? DEFAULT_MAX_CALLS
+                              }
+                              onToggle={() => {
+                                setSelectedMcpTools(prev => {
+                                  const isSelected = prev.some(t => t.name === tool.id);
+                                  if (isSelected) {
+                                    return prev.filter(t => t.name !== tool.id);
+                                  }
+                                  return [
+                                    ...prev,
+                                    {
+                                      type: 'mcp' as const,
+                                      name: tool.id,
+                                      runtime_params: { max_calls: DEFAULT_MAX_CALLS },
+                                    },
+                                  ];
+                                });
+                              }}
+                              onMaxCallsChange={maxCalls => {
+                                setSelectedMcpTools(prev =>
+                                  prev.map(t =>
+                                    t.name === tool.id
+                                      ? {
+                                          ...t,
+                                          runtime_params: {
+                                            ...t.runtime_params,
+                                            max_calls: maxCalls,
+                                          },
+                                        }
+                                      : t
+                                  )
+                                );
+                              }}
+                              disabled={isLoading}
+                            />
                           );
-                        }}
-                        disabled={isLoading}
-                      />
-                    ))}
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className='flex items-center gap-3 justify-end'>
@@ -382,7 +489,8 @@ const Chat: React.FC = () => {
                             isLoading ||
                             (selectedModel !== 'claude-3-7-sonnet' &&
                               selectedModel !== 'claude-4-sonnet') ||
-                            selectedAgents.length > 0
+                            selectedHerokuTools.length > 0 ||
+                            selectedMcpTools.length > 0
                           }
                         />
                         <div className="w-8 h-4 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-heroku-purple-30"></div>

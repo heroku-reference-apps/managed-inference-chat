@@ -1,7 +1,7 @@
 import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import { RateLimitOptions, errorResponseBuilderContext } from '@fastify/rate-limit';
 import { config, getModel, getTool, getModels } from '../lib/config.js';
-import { ChatRequest, ChatRequestBody, ErrorResponse } from '../types/chat.js';
+import { ChatRequest, ChatRequestBody, ErrorResponse, SelectedTool } from '../types/chat.js';
 import { verifyRequest } from '../middleware/security.js';
 
 export const chatRoute: FastifyPluginAsync = async fastify => {
@@ -49,7 +49,7 @@ export const chatRoute: FastifyPluginAsync = async fastify => {
       },
     },
     async (request, reply) => {
-      const { messages, model, agents, reasoning } = request.body;
+      const { messages, model, agents, tools, reasoning } = request.body;
 
       const modelConfig = getModel(model);
 
@@ -60,7 +60,26 @@ export const chatRoute: FastifyPluginAsync = async fastify => {
       const inferenceUrl = `${modelConfig.INFERENCE_URL}/v1/chat/completions`;
       const agentsUrl = `${modelConfig.INFERENCE_URL}/v1/agents/heroku`;
       const systemPrompt = config.system_prompt;
-      const hasAgents = agents && agents.length > 0;
+
+      // Build tools list from new format (tools) or legacy format (agents)
+      const selectedTools: SelectedTool[] = [];
+
+      // Handle new tools format (includes both heroku_tool and mcp types)
+      if (tools && tools.length > 0) {
+        selectedTools.push(...tools);
+      }
+
+      // Handle legacy agents format (all heroku_tool type)
+      if (agents && agents.length > 0) {
+        for (const agentId of agents) {
+          const tool = getTool(agentId);
+          if (tool) {
+            selectedTools.push({ type: tool.type as 'heroku_tool' | 'mcp', name: tool.name });
+          }
+        }
+      }
+
+      const hasTools = selectedTools.length > 0;
 
       const body: ChatRequestBody = {
         model: model,
@@ -76,12 +95,12 @@ export const chatRoute: FastifyPluginAsync = async fastify => {
         ],
       };
 
-      if (hasAgents) {
-        body.tools = agents
-          .map(agent => {
-            return getTool(agent);
-          })
-          .filter((tool): tool is { type: string; name: string } => tool !== undefined);
+      if (hasTools) {
+        body.tools = selectedTools.map(tool => ({
+          type: tool.type,
+          name: tool.name,
+          ...(tool.runtime_params && { runtime_params: tool.runtime_params }),
+        }));
       } else {
         body.stream = true;
         if (model === 'claude-3-7-sonnet' && reasoning) {
@@ -94,7 +113,7 @@ export const chatRoute: FastifyPluginAsync = async fastify => {
       }
 
       try {
-        const response = await fetch(hasAgents ? agentsUrl : inferenceUrl, {
+        const response = await fetch(hasTools ? agentsUrl : inferenceUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
