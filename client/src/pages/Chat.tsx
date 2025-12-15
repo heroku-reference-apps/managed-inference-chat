@@ -226,12 +226,12 @@ const Chat: React.FC = () => {
           messages.length === 0 ? 'max-w-5xl h-[600px]' : 'max-w-5xl h-full'
         )}
       >
-        <div className='bg-white rounded-xl shadow-lg w-full h-full flex flex-col overflow-hidden'>
-          <div className='flex justify-end p-4 border-b border-gray-100'>
+        <div className='bg-white dark:bg-slate-800 rounded-xl shadow-lg dark:shadow-slate-900/50 w-full h-full flex flex-col overflow-hidden transition-colors duration-300'>
+          <div className='flex justify-end p-4 border-b border-gray-100 dark:border-slate-700'>
             <button
               type='button'
               onClick={handleNewChat}
-              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-heroku-purple-30 text-white hover:bg-heroku-purple-20 focus:outline-none focus:ring-2 focus:ring-heroku-purple-30 disabled:opacity-50 text-xs'
+              className='inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-heroku-purple-30 dark:bg-heroku-purple-50 text-white hover:bg-heroku-purple-20 dark:hover:bg-heroku-purple-40 focus:outline-none focus:ring-2 focus:ring-heroku-purple-30 disabled:opacity-50 text-xs transition-colors'
               disabled={messages.length === 0}
             >
               <PlusIcon className='h-3 w-3' />
@@ -264,7 +264,7 @@ const Chat: React.FC = () => {
                     {message.reasoning && (
                       <CollapsibleReasoning thinking={message.reasoning.thinking} expanded={true} />
                     )}
-                    <div className='text-gray-800 bg-white'>
+                    <div className='text-gray-800 dark:text-gray-200 bg-white dark:bg-transparent'>
                       {/[*#[\]_`]/.test(message.content) || message.content.includes('\n\n') ? (
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
@@ -288,8 +288,8 @@ const Chat: React.FC = () => {
                 ) : message.role === 'agent' ? (
                   <div className='flex flex-col max-w-[90%] text-base'>
                     <div className='flex items-center gap-2'>
-                      <RiAiGenerate className='w-4 h-4' />
-                      <div className={clsx('text-gray-600 italic')}>
+                      <RiAiGenerate className='w-4 h-4 dark:text-gray-400' />
+                      <div className={clsx('text-gray-600 dark:text-gray-400 italic')}>
                         {/[*#[\]_`]/.test(message.content) || message.content.includes('\n\n') ? (
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
@@ -308,7 +308,7 @@ const Chat: React.FC = () => {
                     )}
                   </div>
                 ) : (
-                  <div className='chat-message max-w-[90%] px-4 py-3 rounded-2xl bg-heroku-purple-30 text-white'>
+                  <div className='chat-message max-w-[90%] px-4 py-3 rounded-2xl bg-heroku-purple-30 dark:bg-heroku-purple-50 text-white'>
                     {message.content}
                   </div>
                 )}
@@ -316,7 +316,7 @@ const Chat: React.FC = () => {
             ))}
             {error && (
               <div className='flex justify-center'>
-                <div className='bg-red-50 text-red-500 px-4 py-2 rounded-lg flex items-center gap-2'>
+                <div className='bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 px-4 py-2 rounded-lg flex items-center gap-2'>
                   <span>Error: {error.message}</span>
                   <button
                     type='button'
@@ -337,7 +337,7 @@ const Chat: React.FC = () => {
             )}
             <div ref={messagesEndRef} />
           </div>
-          <div className='border-t bg-white p-4 space-y-4'>
+          <div className='border-t border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-4 transition-colors duration-300'>
             <form ref={formRef} onSubmit={handleFormSubmit} className='flex flex-col gap-3'>
               <div className='flex gap-3'>
                 <input
@@ -350,14 +350,14 @@ const Chat: React.FC = () => {
                       ? 'Describe the image you want to generate...'
                       : 'Ask me anything...'
                   }
-                  className='flex-1 rounded-xl border-0 bg-gray-100 px-4 py-3 text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-heroku-purple-30 disabled:bg-gray-50 disabled:text-gray-500'
+                  className='flex-1 rounded-xl border-0 bg-gray-100 dark:bg-slate-700 px-4 py-3 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-heroku-purple-30 dark:focus:ring-heroku-purple-60 disabled:bg-gray-50 dark:disabled:bg-slate-600 disabled:text-gray-500 transition-colors'
                   disabled={isLoading}
                 />
                 {isLoading ? (
                   <button
                     type='button'
                     onClick={stop}
-                    className='rounded-xl bg-gray-100 p-3 text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-heroku-purple-30'
+                    className='rounded-xl bg-gray-100 dark:bg-slate-700 p-3 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-heroku-purple-30 dark:focus:ring-heroku-purple-60 transition-colors'
                     title='Stop generating'
                   >
                     <StopIcon className='h-5 w-5' />
@@ -366,7 +366,7 @@ const Chat: React.FC = () => {
                   <button
                     type='submit'
                     disabled={!input.trim()}
-                    className='rounded-xl bg-heroku-purple-30 p-3 text-white hover:bg-heroku-purple-20 focus:outline-none focus:ring-2 focus:ring-heroku-purple-30 disabled:opacity-50'
+                    className='rounded-xl bg-heroku-purple-30 dark:bg-heroku-purple-50 p-3 text-white hover:bg-heroku-purple-20 dark:hover:bg-heroku-purple-40 focus:outline-none focus:ring-2 focus:ring-heroku-purple-30 disabled:opacity-50 transition-colors'
                     title='Submit your question'
                   >
                     <PaperAirplaneIcon className='h-5 w-5' />
@@ -374,7 +374,7 @@ const Chat: React.FC = () => {
                 )}
               </div>
             </form>
-            <div className='flex items-center gap-4 justify-end text-xs text-gray-500'>
+            <div className='flex items-center gap-4 justify-end text-xs text-gray-500 dark:text-gray-400'>
               <div className='flex flex-col gap-2'>
                 {selectedModel !== 'stable-image-ultra' && (
                   <div className='flex flex-col gap-1.5'>
@@ -477,7 +477,8 @@ const Chat: React.FC = () => {
                   </div>
                 )}
                 <div className='flex items-center gap-3 justify-end'>
-                  {selectedModel !== 'stable-image-ultra' && (
+                  {(selectedModel === 'claude-4-sonnet' ||
+                    selectedModel === 'claude-3-7-sonnet') && (
                     <label className='inline-flex items-center cursor-pointer'>
                       <div className='relative'>
                         <input
@@ -487,13 +488,11 @@ const Chat: React.FC = () => {
                           onChange={e => setUseReasoning(e.target.checked)}
                           disabled={
                             isLoading ||
-                            (selectedModel !== 'claude-3-7-sonnet' &&
-                              selectedModel !== 'claude-4-sonnet') ||
                             selectedHerokuTools.length > 0 ||
                             selectedMcpTools.length > 0
                           }
                         />
-                        <div className="w-8 h-4 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-heroku-purple-30"></div>
+                        <div className="w-8 h-4 bg-gray-200 dark:bg-slate-600 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 dark:after:border-slate-500 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-heroku-purple-30 dark:peer-checked:bg-heroku-purple-50"></div>
                       </div>
                       <span className='ml-2 text-xs font-medium'>Reasoning</span>
                     </label>
@@ -503,7 +502,7 @@ const Chat: React.FC = () => {
                       <select
                         value={aspectRatio}
                         onChange={e => setAspectRatio(e.target.value)}
-                        className='text-xs rounded-md border-gray-300 shadow-sm focus:border-heroku-purple-30 focus:ring-heroku-purple-30 bg-transparent py-1 pl-2 pr-8'
+                        className='text-xs rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-heroku-purple-30 dark:focus:border-heroku-purple-60 focus:ring-heroku-purple-30 dark:focus:ring-heroku-purple-60 bg-transparent dark:bg-slate-700 dark:text-gray-200 py-1 pl-2 pr-8'
                       >
                         {ASPECT_RATIOS.map(ratio => (
                           <option key={ratio.value} value={ratio.value}>
@@ -516,21 +515,21 @@ const Chat: React.FC = () => {
                         value={negativePrompt}
                         onChange={e => setNegativePrompt(e.target.value)}
                         placeholder='Negative prompt'
-                        className='text-xs rounded-md border-gray-300 shadow-sm focus:border-heroku-purple-30 focus:ring-heroku-purple-30 bg-transparent py-1 pl-2 pr-2 w-48'
+                        className='text-xs rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-heroku-purple-30 dark:focus:border-heroku-purple-60 focus:ring-heroku-purple-30 dark:focus:ring-heroku-purple-60 bg-transparent dark:bg-slate-700 dark:text-gray-200 dark:placeholder:text-gray-500 py-1 pl-2 pr-2 w-48'
                       />
                       <input
                         type='number'
                         value={seed}
                         onChange={e => setSeed(parseInt(e.target.value, 10))}
                         placeholder='Seed'
-                        className='text-xs rounded-md border-gray-300 shadow-sm focus:border-heroku-purple-30 focus:ring-heroku-purple-30 bg-transparent py-1 pl-2 pr-2 w-24'
+                        className='text-xs rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-heroku-purple-30 dark:focus:border-heroku-purple-60 focus:ring-heroku-purple-30 dark:focus:ring-heroku-purple-60 bg-transparent dark:bg-slate-700 dark:text-gray-200 py-1 pl-2 pr-2 w-24'
                       />
                     </>
                   )}
                   <select
                     value={selectedModel}
                     onChange={e => setSelectedModel(e.target.value as ModelType)}
-                    className='text-xs rounded-md border-gray-300 shadow-sm focus:border-heroku-purple-30 focus:ring-heroku-purple-30 bg-transparent py-1 pl-2 pr-8'
+                    className='text-xs rounded-md border-gray-300 dark:border-slate-600 shadow-sm focus:border-heroku-purple-30 dark:focus:border-heroku-purple-60 focus:ring-heroku-purple-30 dark:focus:ring-heroku-purple-60 bg-transparent dark:bg-slate-700 dark:text-gray-200 py-1 pl-2 pr-8'
                     disabled={isLoading}
                   >
                     {availableModels.map((model: ModelType) => (

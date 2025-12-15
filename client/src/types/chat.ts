@@ -43,6 +43,16 @@ export interface ImageGenerationResponse {
 export type MessageRole = 'user' | 'assistant' | 'agent';
 export type MessageType = 'text' | 'image';
 
+export interface ToolCall {
+  id: string;
+  type: string;
+  function: {
+    name: string;
+    arguments: string;
+  };
+  result?: string;
+}
+
 export interface Message {
   role: MessageRole;
   content: string;
@@ -51,14 +61,7 @@ export interface Message {
   reasoning?: {
     thinking: string;
   };
-  tool_calls?: {
-    id: string;
-    type: string;
-    function: {
-      name: string;
-      arguments: string;
-    };
-  }[];
+  tool_calls?: ToolCall[];
   is_tool_message?: boolean;
 }
 
@@ -87,6 +90,7 @@ export interface StreamChunk {
           }[]
         | null;
       role: string;
+      tool_call_id?: string;
       reasoning?: {
         thinking: string;
       };
@@ -104,6 +108,7 @@ export interface StreamChunk {
           }[]
         | null;
       role: string;
+      tool_call_id?: string;
       reasoning?: {
         thinking: string;
       };

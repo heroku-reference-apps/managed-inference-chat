@@ -5,22 +5,22 @@ import { CodeBlock } from '@/components/CodeBlock';
 export const markdownComponents: Components = {
   code: CodeBlock,
   p: ({ children, ...props }: React.ComponentPropsWithoutRef<'p'>) => (
-    <p className='mb-3 last:mb-0 text-gray-800' {...props}>
+    <p className='mb-3 last:mb-0 text-gray-800 dark:text-gray-200' {...props}>
       {children}
     </p>
   ),
   ul: ({ children, ...props }: React.ComponentPropsWithoutRef<'ul'>) => (
-    <ul className='list-disc list-inside mb-3 text-gray-800' {...props}>
+    <ul className='list-disc list-inside mb-3 text-gray-800 dark:text-gray-200' {...props}>
       {children}
     </ul>
   ),
   ol: ({ children, ...props }: React.ComponentPropsWithoutRef<'ol'>) => (
-    <ol className='list-decimal list-inside mb-3 text-gray-800' {...props}>
+    <ol className='list-decimal list-inside mb-3 text-gray-800 dark:text-gray-200' {...props}>
       {children}
     </ol>
   ),
   li: ({ children, ...props }: React.ComponentPropsWithoutRef<'li'>) => (
-    <li className='mb-1 text-gray-800' {...props}>
+    <li className='mb-1 text-gray-800 dark:text-gray-200' {...props}>
       {children}
     </li>
   ),
@@ -29,29 +29,32 @@ export const markdownComponents: Components = {
       href={href}
       target='_blank'
       rel='noopener noreferrer'
-      className='text-blue-600 hover:underline'
+      className='text-blue-600 dark:text-blue-400 hover:underline'
       {...props}
     >
       {children}
     </a>
   ),
   blockquote: ({ children, ...props }: React.ComponentPropsWithoutRef<'blockquote'>) => (
-    <blockquote className='border-l-2 border-gray-300 pl-4 italic my-3 text-gray-700' {...props}>
+    <blockquote
+      className='border-l-2 border-gray-300 dark:border-slate-600 pl-4 italic my-3 text-gray-700 dark:text-gray-300'
+      {...props}
+    >
       {children}
     </blockquote>
   ),
   h1: ({ children, ...props }: React.ComponentPropsWithoutRef<'h1'>) => (
-    <h1 className='text-xl font-semibold mb-3 text-gray-900' {...props}>
+    <h1 className='text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100' {...props}>
       {children}
     </h1>
   ),
   h2: ({ children, ...props }: React.ComponentPropsWithoutRef<'h2'>) => (
-    <h2 className='text-lg font-semibold mb-2 text-gray-900' {...props}>
+    <h2 className='text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100' {...props}>
       {children}
     </h2>
   ),
   h3: ({ children, ...props }: React.ComponentPropsWithoutRef<'h3'>) => (
-    <h3 className='text-base font-semibold mb-2 text-gray-900' {...props}>
+    <h3 className='text-base font-semibold mb-2 text-gray-900 dark:text-gray-100' {...props}>
       {children}
     </h3>
   ),
@@ -63,30 +66,33 @@ export const markdownComponents: Components = {
     </div>
   ),
   thead: ({ children, ...props }: React.ComponentPropsWithoutRef<'thead'>) => (
-    <thead className='bg-gray-50' {...props}>
+    <thead className='bg-gray-50 dark:bg-slate-700' {...props}>
       {children}
     </thead>
   ),
   tbody: ({ children, ...props }: React.ComponentPropsWithoutRef<'tbody'>) => (
-    <tbody className='bg-white divide-y divide-gray-100' {...props}>
+    <tbody
+      className='bg-white dark:bg-slate-800 divide-y divide-gray-100 dark:divide-slate-600'
+      {...props}
+    >
       {children}
     </tbody>
   ),
   tr: ({ children, ...props }: React.ComponentPropsWithoutRef<'tr'>) => (
-    <tr className='border-b border-gray-100 last:border-0' {...props}>
+    <tr className='border-b border-gray-100 dark:border-slate-600 last:border-0' {...props}>
       {children}
     </tr>
   ),
   th: ({ children, ...props }: React.ComponentPropsWithoutRef<'th'>) => (
     <th
-      className='px-4 py-3 text-left text-gray-700 font-semibold border-b border-gray-200'
+      className='px-4 py-3 text-left text-gray-700 dark:text-gray-200 font-semibold border-b border-gray-200 dark:border-slate-600'
       {...props}
     >
       {children}
     </th>
   ),
   td: ({ children, ...props }: React.ComponentPropsWithoutRef<'td'>) => (
-    <td className='px-4 py-3 text-gray-800' {...props}>
+    <td className='px-4 py-3 text-gray-800 dark:text-gray-200' {...props}>
       {children}
     </td>
   ),

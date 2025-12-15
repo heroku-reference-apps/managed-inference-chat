@@ -128,11 +128,39 @@ export function useCustomChat({
 
               const chunk: StreamChunk = JSON.parse(data);
 
-              // Do nothing with tool messages
+              // Handle tool result messages - associate result with the tool call
               if (
                 chunk.choices[0]?.delta?.role === 'tool' ||
                 chunk.choices[0]?.message?.role === 'tool'
               ) {
+                const toolCallId =
+                  chunk.choices[0]?.delta?.tool_call_id || chunk.choices[0]?.message?.tool_call_id;
+                const toolResultContent =
+                  chunk.choices[0]?.delta?.content || chunk.choices[0]?.message?.content;
+
+                if (toolCallId && toolResultContent) {
+                  // Find the agent message with this tool call and update it with the result
+                  setMessages(prev => {
+                    const newMessages = [...prev];
+                    for (let i = newMessages.length - 1; i >= 0; i--) {
+                      const msg = newMessages[i];
+                      if (
+                        msg.role === 'agent' &&
+                        msg.is_tool_message &&
+                        msg.tool_calls?.[0]?.id === toolCallId
+                      ) {
+                        newMessages[i] = {
+                          ...msg,
+                          tool_calls: msg.tool_calls.map(tc =>
+                            tc.id === toolCallId ? { ...tc, result: toolResultContent } : tc
+                          ),
+                        };
+                        break;
+                      }
+                    }
+                    return newMessages;
+                  });
+                }
                 continue;
               }
 

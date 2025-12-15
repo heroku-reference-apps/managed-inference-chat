@@ -38,10 +38,10 @@ export const McpToolToggle: React.FC<McpToolToggleProps> = ({
         onMouseLeave={() => setShowTooltip(false)}
         className={clsx(
           'flex items-center gap-1.5 px-2 py-1 text-xs font-medium transition-colors',
-          'border hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-heroku-purple-30',
+          'border focus:outline-none focus:ring-2 focus:ring-heroku-purple-30 dark:focus:ring-heroku-purple-60',
           isSelected
-            ? 'border-heroku-purple-30 bg-heroku-purple-95 text-heroku-purple-30'
-            : 'border-gray-300 text-gray-700',
+            ? 'border-heroku-purple-30 dark:border-heroku-purple-60 bg-heroku-purple-95 dark:bg-heroku-purple-20 text-heroku-purple-30 dark:text-heroku-purple-70'
+            : 'border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700',
           isSelected ? 'rounded-l-md border-r-0' : 'rounded-md',
           disabled && 'opacity-50 cursor-not-allowed'
         )}
@@ -57,8 +57,8 @@ export const McpToolToggle: React.FC<McpToolToggleProps> = ({
           onClick={() => setShowMaxCallsDropdown(true)}
           disabled={disabled}
           className={clsx(
-            'px-1.5 py-1 rounded-r-md border focus:outline-none focus:ring-2 focus:ring-heroku-purple-30',
-            'border-heroku-purple-30 bg-heroku-purple-95 text-heroku-purple-30 hover:bg-heroku-purple-90',
+            'px-1.5 py-1 rounded-r-md border focus:outline-none focus:ring-2 focus:ring-heroku-purple-30 dark:focus:ring-heroku-purple-60',
+            'border-heroku-purple-30 dark:border-heroku-purple-60 bg-heroku-purple-95 dark:bg-heroku-purple-20 text-heroku-purple-30 dark:text-heroku-purple-70 hover:bg-heroku-purple-90 dark:hover:bg-heroku-purple-30',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
           title='Configure max calls'
@@ -79,8 +79,8 @@ export const McpToolToggle: React.FC<McpToolToggleProps> = ({
             onChange={e => onMaxCallsChange(Number(e.target.value))}
             disabled={disabled}
             className={clsx(
-              'text-xs py-1 pl-1 pr-5 rounded-r-md border focus:outline-none focus:ring-2 focus:ring-heroku-purple-30',
-              'border-heroku-purple-30 bg-heroku-purple-95 text-heroku-purple-30',
+              'text-xs py-1 pl-1 pr-5 rounded-r-md border focus:outline-none focus:ring-2 focus:ring-heroku-purple-30 dark:focus:ring-heroku-purple-60',
+              'border-heroku-purple-30 dark:border-heroku-purple-60 bg-heroku-purple-95 dark:bg-heroku-purple-20 text-heroku-purple-30 dark:text-heroku-purple-70',
               disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
@@ -94,7 +94,7 @@ export const McpToolToggle: React.FC<McpToolToggleProps> = ({
           {showDropdownTooltip && (
             <div
               className={clsx(
-                'absolute z-20 px-2 py-1 text-xs text-white bg-gray-800 rounded shadow-lg',
+                'absolute z-20 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-slate-700 rounded shadow-lg',
                 'whitespace-nowrap bottom-full left-1/2 -translate-x-1/2 mb-1'
               )}
             >
@@ -102,7 +102,7 @@ export const McpToolToggle: React.FC<McpToolToggleProps> = ({
               <div
                 className={clsx(
                   'absolute top-full left-1/2 -translate-x-1/2',
-                  'border-4 border-transparent border-t-gray-800'
+                  'border-4 border-transparent border-t-gray-800 dark:border-t-slate-700'
                 )}
               />
             </div>
@@ -114,7 +114,7 @@ export const McpToolToggle: React.FC<McpToolToggleProps> = ({
       {showTooltip && (
         <div
           className={clsx(
-            'absolute z-10 px-2 py-1 text-xs text-white bg-gray-800 rounded shadow-lg',
+            'absolute z-10 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-slate-700 rounded shadow-lg',
             'whitespace-nowrap bottom-full left-1/2 -translate-x-1/2 mb-1'
           )}
         >
@@ -128,7 +128,7 @@ export const McpToolToggle: React.FC<McpToolToggleProps> = ({
           <div
             className={clsx(
               'absolute top-full left-1/2 -translate-x-1/2',
-              'border-4 border-transparent border-t-gray-800'
+              'border-4 border-transparent border-t-gray-800 dark:border-t-slate-700'
             )}
           />
         </div>
