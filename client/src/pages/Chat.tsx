@@ -28,9 +28,12 @@ import { PREDEFINED_PROMPTS } from '@/constants/predefinedPrompts';
 
 const getModelDisplayName = (modelId: ModelType): string => {
   const displayNames: Record<ModelType, string> = {
+    'claude-4-5-sonnet': 'Claude 4.5 Sonnet',
+    'claude-4-5-haiku': 'Claude 4.5 Haiku',
     'claude-4-sonnet': 'Claude 4 Sonnet',
     'claude-3-7-sonnet': 'Claude 3.7 Sonnet',
     'claude-3-5-sonnet-latest': 'Claude 3.5 Sonnet',
+    'claude-3-5-haiku': 'Claude 3.5 Haiku',
     'nova-lite': 'Nova Lite',
     'nova-pro': 'Nova Pro',
     'gpt-oss-120b': 'gpt-oss 120b',
@@ -52,7 +55,7 @@ const ASPECT_RATIOS = [
 ];
 
 const Chat: React.FC = () => {
-  const [selectedModel, setSelectedModel] = useState<ModelType>('claude-4-sonnet');
+  const [selectedModel, setSelectedModel] = useState<ModelType>('claude-4-5-sonnet');
   const [useReasoning, setUseReasoning] = useState(false);
   const [selectedHerokuTools, setSelectedHerokuTools] = useState<SelectedTool[]>([]);
   const [selectedMcpTools, setSelectedMcpTools] = useState<SelectedTool[]>([]);
@@ -110,7 +113,13 @@ const Chat: React.FC = () => {
   });
 
   useEffect(() => {
-    if (selectedModel !== 'claude-4-sonnet' && selectedModel !== 'claude-3-7-sonnet') {
+    const reasoningModels = [
+      'claude-4-5-sonnet',
+      'claude-4-5-haiku',
+      'claude-4-sonnet',
+      'claude-3-7-sonnet',
+    ];
+    if (!reasoningModels.includes(selectedModel)) {
       setUseReasoning(false);
     }
   }, [selectedModel]);
@@ -142,7 +151,7 @@ const Chat: React.FC = () => {
     // Reset all state to defaults
     setMessages([]);
     setInput('');
-    setSelectedModel('claude-4-sonnet');
+    setSelectedModel('claude-4-5-sonnet');
     setUseReasoning(false);
     setSelectedHerokuTools([]);
     setSelectedMcpTools([]);
@@ -477,7 +486,9 @@ const Chat: React.FC = () => {
                   </div>
                 )}
                 <div className='flex items-center gap-3 justify-end'>
-                  {(selectedModel === 'claude-4-sonnet' ||
+                  {(selectedModel === 'claude-4-5-sonnet' ||
+                    selectedModel === 'claude-4-5-haiku' ||
+                    selectedModel === 'claude-4-sonnet' ||
                     selectedModel === 'claude-3-7-sonnet') && (
                     <label className='inline-flex items-center cursor-pointer'>
                       <div className='relative'>

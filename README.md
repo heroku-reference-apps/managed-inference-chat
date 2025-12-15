@@ -113,9 +113,12 @@ Generate secure keys using: `openssl rand -hex 32`
 1. Provision the Heroku Managed Inference and Agents models
 
    ```bash
+   heroku addons:create heroku-inference:claude-4-5-sonnet --as INFERENCE_4_5
+   heroku addons:create heroku-inference:claude-4-5-haiku --as INFERENCE_4_5_HAIKU
    heroku addons:create heroku-inference:claude-4-sonnet --as INFERENCE_4
    heroku addons:create heroku-inference:claude-3-7-sonnet --as INFERENCE_3_7
    heroku addons:create heroku-inference:claude-3-5-sonnet-latest --as INFERENCE_3_5
+   heroku addons:create heroku-inference:claude-3-5-haiku --as INFERENCE_3_5_HAIKU
    heroku addons:create heroku-inference:nova-lite --as INFERENCE_NOVA_LITE
    heroku addons:create heroku-inference:nova-pro --as INFERENCE_NOVA_PRO
    heroku addons:create heroku-inference:gpt-oss-120b --as INFERENCE_GPT_OSS
