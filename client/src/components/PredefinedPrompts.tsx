@@ -16,10 +16,12 @@ export const PredefinedPrompts: React.FC<PredefinedPromptsProps> = ({
   return (
     <div className='w-full max-w-4xl mx-auto px-4'>
       <div className='text-center mb-8'>
-        <h2 className='text-2xl font-semibold text-gray-800 mb-2'>
+        <h2 className='text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2'>
           Chat with Heroku Managed Inference
         </h2>
-        <p className='text-gray-500'>Here are some examples to get started with chat mode</p>
+        <p className='text-gray-500 dark:text-gray-400'>
+          Here are some examples to get started with chat mode
+        </p>
       </div>
 
       <div className='space-y-4'>
@@ -28,11 +30,11 @@ export const PredefinedPrompts: React.FC<PredefinedPromptsProps> = ({
             key={prompt.id}
             onClick={() => onPromptSelect(prompt)}
             disabled={disabled}
-            className='w-full p-4 text-left rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+            className='w-full p-4 text-left rounded-lg border border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
           >
             <div className='flex items-center gap-3'>
-              <ChatBubbleLeftIcon className='h-5 w-5 text-gray-400 flex-shrink-0' />
-              <span className='text-gray-700 font-medium'>{prompt.title}</span>
+              <ChatBubbleLeftIcon className='h-5 w-5 text-gray-400 dark:text-gray-500 flex-shrink-0' />
+              <span className='text-gray-700 dark:text-gray-200 font-medium'>{prompt.title}</span>
             </div>
           </button>
         ))}
