@@ -6,7 +6,7 @@ export const PREDEFINED_PROMPTS: PredefinedPrompt[] = [
     title: 'Explain Managed Inference simple terms',
     prompt: 'Explain Managed Inference in simple terms',
     tools: [],
-    model: 'claude-4-sonnet',
+    model: 'claude-4-5-sonnet',
   },
   {
     id: 'python-script',

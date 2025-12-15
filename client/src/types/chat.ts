@@ -14,9 +14,12 @@ export type Agent = {
 };
 
 export type ModelType =
+  | 'claude-4-5-sonnet'
+  | 'claude-4-5-haiku'
   | 'claude-4-sonnet'
   | 'claude-3-7-sonnet'
   | 'claude-3-5-sonnet-latest'
+  | 'claude-3-5-haiku'
   | 'nova-lite'
   | 'nova-pro'
   | 'gpt-oss-120b'
