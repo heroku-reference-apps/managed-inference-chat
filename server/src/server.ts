@@ -10,6 +10,7 @@ import Fastify from 'fastify';
 import { chatRoute } from './routes/chat.js';
 import { imagesRoute } from './routes/images.js';
 import { csrfRoute } from './routes/csrf.js';
+import { mcpRoute } from './routes/mcp.js';
 import './types/session.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -85,6 +86,7 @@ fastify.register(async function (fastify) {
   await fastify.register(csrfRoute);
   await fastify.register(chatRoute);
   await fastify.register(imagesRoute);
+  await fastify.register(mcpRoute);
 });
 
 // Run the server

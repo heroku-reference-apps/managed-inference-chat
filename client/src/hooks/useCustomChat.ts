@@ -8,7 +8,12 @@ const filterMessages = (messages: Message[]) => {
   );
 };
 
-export function useCustomChat({ model, reasoning, agents, historyLimit = 6 }: UseCustomChatProps) {
+export function useCustomChat({
+  model,
+  reasoning,
+  tools = [],
+  historyLimit = 6,
+}: UseCustomChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [error, setError] = useState<ChatError | null>(null);
@@ -54,7 +59,7 @@ export function useCustomChat({ model, reasoning, agents, historyLimit = 6 }: Us
         messages: recentMessages,
         model,
         reasoning,
-        agents,
+        tools: tools.length > 0 ? tools : undefined,
       });
 
       const response = await secureRequest('/api/chat', {
@@ -83,6 +88,7 @@ export function useCustomChat({ model, reasoning, agents, historyLimit = 6 }: Us
       let accumulatedReasoning = '';
       let seenToolCallIds = new Set<string>();
       let toolMessagesByCallId = new Map<string, string>();
+      let streamError = false;
 
       let buffer = '';
 
@@ -95,13 +101,31 @@ export function useCustomChat({ model, reasoning, agents, historyLimit = 6 }: Us
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
+        let currentEvent = 'message';
+
         for (const line of lines) {
+          // Track event type
+          if (line.startsWith('event:')) {
+            currentEvent = line.replace(/^event:\s?/, '').trim();
+            continue;
+          }
+
           if (line.startsWith('data:')) {
             const data = line.replace(/^data:\s?/, '');
 
             if (data === '[DONE]') continue;
 
             try {
+              // Handle error events from the stream
+              if (currentEvent === 'error') {
+                const errorData = JSON.parse(data);
+                const errorMessage = errorData.message || 'An error occurred during tool execution';
+                setError({ message: errorMessage, code: String(errorData.code || 500) });
+                setStatus('error');
+                streamError = true;
+                continue;
+              }
+
               const chunk: StreamChunk = JSON.parse(data);
 
               // Do nothing with tool messages
@@ -218,7 +242,10 @@ export function useCustomChat({ model, reasoning, agents, historyLimit = 6 }: Us
         }
       }
 
-      setStatus('idle');
+      // Only set idle if no error occurred during streaming
+      if (!streamError) {
+        setStatus('idle');
+      }
     } catch (err: unknown) {
       if (err instanceof Error) {
         if (err.name === 'AbortError') {

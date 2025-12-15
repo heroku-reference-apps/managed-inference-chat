@@ -121,7 +121,7 @@ export interface StreamChunk {
 export interface UseCustomChatProps {
   model: ModelType;
   reasoning: boolean;
-  agents: AgentType[];
+  tools?: SelectedTool[];
   historyLimit?: number;
 }
 
@@ -132,4 +132,34 @@ export interface PredefinedPrompt {
   tools: AgentType[];
   model: ModelType;
   icon?: string;
+}
+
+/**
+ * MCP Tool types for frontend consumption
+ */
+export interface MCPTool {
+  id: string;
+  name: string;
+  serverNamespace: string;
+  description?: string;
+}
+
+export interface MCPToolsResponse {
+  tools: MCPTool[];
+}
+
+/**
+ * Runtime parameters for tools
+ */
+export interface ToolRuntimeParams {
+  max_calls?: number;
+}
+
+/**
+ * Selected tool that can be either a Heroku tool or MCP tool
+ */
+export interface SelectedTool {
+  type: 'heroku_tool' | 'mcp';
+  name: string;
+  runtime_params?: ToolRuntimeParams;
 }
